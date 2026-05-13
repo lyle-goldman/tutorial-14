@@ -34,8 +34,8 @@
 	
 */
 
-/* The pokerGame object. */
-var pokerGame = {
+// The pokerGame object.
+const pokerGame = {
     currentBank: null,
     currentBet: null,
 
@@ -50,169 +50,169 @@ var pokerGame = {
     }
 };
 
-/* Constructor function for poker cards. */
-function pokerCard(cardSuit, cardRank) {
-    this.suit = cardSuit;
-    this.rank = cardRank;
-    this.rankValue = null;
+// Class for poker cards.
+class pokerCard {
+    constructor(cardSuit, cardRank) {
+        this.suit = cardSuit;
+        this.rank = cardRank;
+        this.rankValue = null;
+    }
+
+    // Method to reference the image source file for a card.
+    cardImage() {
+        const suitAbbr = this.suit.substring(0, 1).toLowerCase();
+        return suitAbbr + this.rankValue + ".png";
+    }
+
+    // Method to replace a card with one from the deck.
+    replaceFromDeck(pokerDeck) {
+        const newCard = pokerDeck.cards.shift();
+        this.suit = newCard.suit;
+        this.rank = newCard.rank;
+        this.rankValue = newCard.rankValue;
+    }
 }
 
-// Method to reference the image source file for a card. */
-pokerCard.prototype.cardImage = function() {
-    var suitAbbr = this.suit.substring(0, 1).toLowerCase();
-    return suitAbbr + this.rankValue + ".png";
-};
 
-/* Method to replace a card with one from the deck. */
-pokerCard.prototype.replaceFromDeck = function(pokerDeck) {
-    this.suit = pokerDeck.cards[0].suit;
-    this.rank = pokerDeck.cards[0].rank;
-    this.rankValue = pokerDeck.cards[0].rankValue;
-    pokerDeck.cards.shift();
-};
 
-/* Constructor function for poker decks. */
-function pokerDeck() {
-    this.cards = new Array(52);
+// Class for poker decks.
+class pokerDeck {
+    constructor() {
+        this.cards = new Array(52);
 
-    var suits = ["Clubs", "Diamonds", "Hearts", "Spades"];
-    var ranks = ["2", "3", "4", "5", "6",
-                 "7", "8", "9", "10",
-                 "Jack", "Queen", "King", "Ace"];
+        const suits = ["Clubs", "Diamonds", "Hearts", "Spades"];
+        const ranks = [
+            "2", "3", "4", "5", "6",
+            "7", "8", "9", "10",
+            "Jack", "Queen", "King", "Ace"
+        ];
 
-    var cardCount = 0;
-    for(var i = 0; i < 4; i++) {
-        for(var j = 0; j < 13; j++) {
-            this.cards[cardCount] = new pokerCard(suits[i], ranks[j]);
-            this.cards[cardCount].rankValue = j+2;
-            cardCount++;
+        let cardCount = 0;
+        for(let i = 0; i < 4; i++) {
+            for(let j = 0; j < 13; j++) {
+                const newCard = new pokerCard(suits[i], ranks[j]);
+                newCard.rankValue = j + 2;
+                this.cards[cardCount] = newCard;
+                cardCount++;
+            }
         }
     }
 
     // Method to randomly sort the deck.
-    this.shuffle = function() {
-        this.cards.sort(function() {
-            return 0.5 - Math.random();
-        });
-    };
+    shuffle() {
+        this.cards.sort(() => 0.5 - Math.random());
+    }
 
     // Method to deal cards from the deck into a poker hand.
-    this.dealTo = function(pokerHand) {
-        for(var i = 0; i < pokerHand.cards.length; i++) {
+    dealTo(pokerHand) {
+        for(let i = 0, len = pokerHand.cards.length; i < len; i++) {
             pokerHand.cards[i] = this.cards.shift();
         }
     };
 }
 
-/* Constructor function for poker hands. */
-function pokerHand(handLength) {
-    this.cards = new Array(handLength);
-}
-
-/* Return the highest ranked card in the hand. */
-pokerHand.prototype.highCard = function() {
-    return Math.max.call(pokerHand,
-        this.cards[0].rankValue,
-        this.cards[1].rankValue,
-        this.cards[2].rankValue,
-        this.cards[3].rankValue,
-        this.cards[4].rankValue);
-};
-
-/* Test for the presence of a flush. */
-pokerHand.prototype.hasFlush = function() {
-    var firstSuit = this.cards[0].suit;
-    return this.cards.every(function(card) {
-        return card.suit === firstSuit;
-    });
-};
-
-/* Test for the presence of a straight. */
-pokerHand.prototype.hasStraight = function() {
-    this.cards.sort(function(a, b) {
-        return a.rankValue - b.rankValue;
-    });
-    return this.cards.every(function(card, i, cards) {
-        if(i > 0) {
-            return (cards[i].rankValue - cards[i-1].rankValue === 1);
-        }
-        else {
-            return true;
-        }
-    });
-};
-
-/* Test for the presence of a straight flush. */
-pokerHand.prototype.hasStraightFlush = function() {
-    return this.hasFlush() && this.hasStraight();
-};
-
-/* Test for the presence of a royal flush. */
-pokerHand.prototype.hasRoyalFlush = function() {
-    return this.hasStraightFlush() && this.highCard() === 14;
-};
-
-/* Test for duplicates in the hand. */
-pokerHand.prototype.hasSets = function() {
-    // handSets summarizes the duplicates in the hand.
-    var handSets = {};
-    this.cards.forEach(function(card) {
-        if(handSets.hasOwnProperty(card.rankValue)) {
-            handSets[card.rankValue]++;
-        }
-        else {
-            handSets[card.rankValue] = 1;
-        }
-    });
-
-    var sets = "none";
-    var pairRank;
-
-    for(var cardRank in handSets) {
-        if(handSets[cardRank] === 4) {sets = "Four of a Kind";}
-        if(handSets[cardRank] === 3) {
-            if(sets === "Pair") {sets = "Full House";}
-            else {sets = "Three of a Kind";}
-        }
-        if(handSets[cardRank] === 2) {
-            if(sets === "Three of a Kind") {sets = "Full House";}
-            else if(sets === "Pair") {sets = "Two Pair";}
-            else {sets = "Pair"; pairRank = cardRank;}
-        }
+// Class for poker hands.
+class pokerHand {
+    constructor(handLength) {
+        this.cards = new Array(handLength);
     }
 
-    if(sets === "Pair" && pairRank >= 11) {
-        sets = "Jacks or Better";
+    // Return the highest ranked card in the hand.
+    highCard() {
+        return Math.max(
+            this.cards[0].rankValue,
+            this.cards[1].rankValue,
+            this.cards[2].rankValue,
+            this.cards[3].rankValue,
+            this.cards[4].rankValue
+        );
     }
 
-    return sets;
-};
+    // Test for the presence of a flush.
+    hasFlush() {
+        const firstSuit = this.cards[0].suit;
+        return this.cards.every(card => card.suit === firstSuit);
+    }
 
-/* Returns the type of poker hand. */
-pokerHand.prototype.handType = function() {
-    if(this.hasRoyalFlush()) {return "Royal Flush";}
-    else if(this.hasStraightFlush()) {return "Straight Flush";}
-    else if(this.hasFlush()) {return "Flush";}
-    else if(this.hasStraight()) {return "Straight";}
-    else {
-        var sets = this.hasSets();
-        if(sets === "Pair" || sets === "none") {sets = "No Winner";}
+    // Test for the presence of a straight.
+    hasStraight() {
+        this.cards.sort((a, b) => a.rankValue - b.rankValue);
+        return this.cards.every((card, i, cards) =>
+            (i <= 0) || (cards[i].rankValue - cards[i - 1].rankValue === 1)
+        );
+    }
+
+    // Test for the presence of a straight flush.
+    hasStraightFlush() {
+        return this.hasFlush() && this.hasStraight();
+    }
+
+    // Test for the presence of a royal flush.
+    hasRoyalFlush() {
+        return this.hasStraightFlush() && this.highCard() === 14;
+    }
+
+    // Test for duplicates in the hand.
+    hasSets() {
+        // handSets summarizes the duplicates in the hand.
+        const handSets = {};
+        this.cards.forEach(card => {
+            if(handSets.hasOwnProperty(card.rankValue)) {
+                ++handSets[card.rankValue];
+            }
+            else {
+                handSets[card.rankValue] = 1;
+            }
+        });
+
+        let sets = "none";
+        let pairRank;
+
+        for(let cardRank in handSets) {
+            const value = handSets[cardRank];
+            if(value === 4) { sets = "Four of a Kind"; }
+            else if(value === 3) {
+                if(sets === "Pair") { sets = "Full House"; }
+                else { sets = "Three of a Kind"; }
+            }
+            else if(value === 2) {
+                if(sets === "Three of a Kind") { sets = "Full House"; }
+                else if(sets === "Pair") { sets = "Two Pair"; }
+                else { sets = "Pair"; pairRank = cardRank; }
+            }
+        }
+
+        if(sets === "Pair" && pairRank >= 11) {
+            sets = "Jacks or Better";
+        }
+
         return sets;
     }
-};
 
-/* Return the payout multiplier for each hand. */
-pokerHand.prototype.handOdds = function() {
-    switch(this.handType()) {
-        case "Royal Flush": return 250;
-        case "Straight Flush": return 50;
-        case "Four of a Kind": return 25;
-        case "Full House": return 9;
-        case "Flush": return 6;
-        case "Straight": return 4;
-        case "Three of a Kind": return 3;
-        case "Two Pair": return 2;
-        case "Jacks or Better": return 1;
-        default: return 0;
+    // Returns the type of poker hand.
+    handType() {
+        if(this.hasRoyalFlush()) return "Royal Flush";
+        if(this.hasStraightFlush()) return "Straight Flush";
+        if(this.hasFlush()) return "Flush";
+        if(this.hasStraight()) return "Straight";
+        const sets = this.hasSets();
+        if(sets === "Pair" || sets === "none") return "No Winner";
+        return sets;
     }
-};
+
+    // Return the payout multiplier for each hand.
+    handOdds() {
+        switch(this.handType()) {
+            case "Royal Flush": return 250;
+            case "Straight Flush": return 50;
+            case "Four of a Kind": return 25;
+            case "Full House": return 9;
+            case "Flush": return 6;
+            case "Straight": return 4;
+            case "Three of a Kind": return 3;
+            case "Two Pair": return 2;
+            case "Jacks or Better": return 1;
+            default: return 0;
+        }
+    }
+}
